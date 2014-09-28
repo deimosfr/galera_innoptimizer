@@ -1,0 +1,66 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+#
+VAGRANTFILE_API_VERSION = "2"
+
+# Insert all your Vms with configs
+boxes = [
+    { :name => :galera1, :role => 'gc', :ip => '192.168.33.31' }, # galera cluster node 1
+    { :name => :galera2, :role => 'gc', :ip => '192.168.33.32' }, # galera cluster node 2
+    { :name => :galera3, :role => 'gc', :ip => '192.168.33.33' }, # galera cluster node 3
+]
+
+$install_common = <<INSTALL
+aptitude update
+DEBIAN_FRONTEND=noninteractive aptitude -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install python-software-properties openntpd
+INSTALL
+
+$install = <<INSTALL
+aptitude update
+DEBIAN_FRONTEND=noninteractive aptitude -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install python-software-properties
+apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 0xcbcb082a1bb943db
+apt-key adv --keyserver keys.gnupg.net --recv-keys 1C4CBDCDCD2EFD2A
+add-apt-repository 'deb http://ftp.igh.cnrs.fr/pub/mariadb/repo/10.0/debian wheezy main'
+add-apt-repository 'deb http://repo.percona.com/apt wheezy main'
+echo 'Package: *
+Pin: release o=Percona Development Team
+Pin-Priority: 100' > /etc/apt/preferences.d/00percona.pref
+aptitude update
+DEBIAN_FRONTEND=noninteractive aptitude -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install percona-toolkit mariadb-galera-server galera rsync xinetd python-pip python-dev tmux vim sysbench
+pip install Glances
+INSTALL
+
+$install_lb = <<INSTALL
+add-apt-repository 'deb http://ftp.fr.debian.org/debian/ wheezy-backports main'
+aptitude update
+DEBIAN_FRONTEND=noninteractive aptitude -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install haproxy tcpdump keepalived
+sed -i "s/ENABLED=0/ENABLED=1/" /etc/default/haproxy
+echo "net.ipv4.ip_nonlocal_bind = 1" >> /etc/sysctl.conf
+INSTALL
+
+Vagrant::Config.run do |config|
+  # Default box OS
+  vm_default = proc do |boxcnf|
+    boxcnf.vm.box       = "deimosfr/debian-wheezy"
+  end
+
+  boxes.each do |opts|
+    vm_default.call(config)
+    config.vm.define opts[:name] do |config|
+        config.vm.customize ["modifyvm", :id, "--cpus", 2]
+        config.vm.network   :bridged, :bridge => "eth0"
+        config.vm.network   :hostonly, opts[:ip]
+        config.vm.host_name = "%s.vm" % opts[:name].to_s
+        config.vm.provision "shell", inline: $install_common
+        # Install HAProxy for load balancer server or
+        if opts[:role] == 'lb'
+            config.vm.provision "shell", inline: $install_lb
+        else
+            config.vm.provision "shell", inline: $install
+            config.vm.customize ["modifyvm", :id, "--memory", 768]
+        end
+    end
+  end
+end
+
