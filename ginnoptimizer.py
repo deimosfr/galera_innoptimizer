@@ -40,6 +40,8 @@ def print_color(mtype, message=''):
         print(Fore.RED + "\n[!]" + message)
     elif (mtype == 'sub'):
         print('  -> ' + message + '...'),
+    elif (mtype == 'subsub'):
+        print("\n    -> " + message + '...'),
     elif (mtype == 'up'):
         print(Fore.CYAN + 'UPDATED')
 
@@ -166,11 +168,30 @@ def optimize_rsu(dbname, tables_list, fcpmax):
 
         """
 
+        # Checking if there are partitions on the current table
+        ptables = sql_query(['EXPLAIN PARTITIONS select * from ' + dbname +
+                             '.' + table + ';'], True)
+        partitions = ptables[0][3].split(',')
+
+        # Launching query
         print_color('sub', 'optimizing ' + table + ' in progress')
-        sql_query(['SET wsrep_on=OFF;',
-                   'optimize table ' + dbname + '.' + table + ';'],
-                  False, False)
-        print_color('ok')
+        if len(partitions) == 1:
+            sql_query(['SET wsrep_on=OFF;',
+                       'optimize table ' + dbname + '.' + table + ';'],
+                      False, False)
+            print_color('ok')
+        else:
+            for partition in partitions:
+                print_color('subsub', 'partition ' + partition +
+                            ' in progress')
+                print('ALTER ONLINE TABLE ' + dbname + '.' + table +
+                      ' REBUILD PARTITION ' + partition + ';')
+                sql_query(['SET wsrep_on=OFF;',
+                           'ALTER ONLINE TABLE ' + dbname + '.' + table +
+                           ' REBUILD PARTITION ' + partition + ';'],
+                          False, False)
+                print_color('ok')
+                get_wsrep_fcp(fcpmax)
 
     # Optimize each tables
     enable_rsu()

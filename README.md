@@ -37,6 +37,7 @@ Galera Innoptimizer is doing:
  * checking that the flow control paused value is enough smaller to start entering RSU mode. If it's not the case, it will wait 30 sec and re-checking until the value is correct.
  * entering RSU mode
  * optimizing table
+ * if partitionning detected, rebuild each of them instead of optimizing table
  * retoring TOI mode
 
 If during an optimize the Galera workload is too high on the current table, it will abord optimize and jump to the next table. You are notified of each status for each tables.
@@ -102,6 +103,18 @@ License
 -------
 
 GPL
+
+
+ChangeLog
+---------
+
+* v0.2:
+ * Adding table partitionning support (MariaDB 5.5 only for the moment, not MariaDB 10)
+
+
+* v0.1:
+ * First release
+
 
 Author Information
 ------------------
