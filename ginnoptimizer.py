@@ -171,7 +171,10 @@ def optimize_rsu(dbname, tables_list, fcpmax):
         # Checking if there are partitions on the current table
         ptables = sql_query(['EXPLAIN PARTITIONS select * from ' + dbname +
                              '.' + table + ';'], True)
-        partitions = ptables[0][3].split(',')
+        if ptables[0][3] == None:
+          partitions = ['no partitions']
+        else:
+          partitions = ptables[0][3].split(',')
 
         # Launching query
         print_color('sub', 'optimizing ' + table + ' in progress')
