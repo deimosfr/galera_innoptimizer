@@ -127,7 +127,7 @@ def enable_rsu():
     """
     print_color('+', 'Enabling RSU mode')
     sql_query(['SET GLOBAL wsrep_OSU_method="RSU";',
-               'SET GLOBAL wsrep_desync=ON;'])
+               'SET GLOBAL wsrep_desync=1;'])
     print_color('ok')
 
 
@@ -137,7 +137,7 @@ def restore_toi():
     """
     print_color('+', 'Restoring TOI mode')
     sql_query(['SET wsrep_on=ON;',
-               'SET GLOBAL wsrep_desync=OFF;',
+               'SET GLOBAL wsrep_desync=0;',
                'SET GLOBAL wsrep_OSU_method="TOI";'])
     print_color('ok')
 
