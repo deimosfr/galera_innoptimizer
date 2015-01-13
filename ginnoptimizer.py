@@ -127,7 +127,7 @@ def get_sorted_tables_by_size(dbname):
     print_color('+', "Getting list of all tables in " + dbname + " database")
     tables_list = sql_query([
         'SELECT TABLE_NAME, (data_length + index_length) AS size FROM information_schema.TABLES \
-        WHERE table_schema = "' + dbname + '"\
+        WHERE table_schema = "' + dbname + '" AND TABLE_TYPE<>"VIEW"\
         ORDER BY (data_length + index_length);'],
         True)
 
@@ -199,6 +199,8 @@ def optimize_rsu(dbname, tables_list, fcpmax):
 
         :table: table name
         :type table: str
+        :size: size of the table
+        :type size: int
 
         """
 
