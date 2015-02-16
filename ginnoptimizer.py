@@ -247,6 +247,29 @@ def check_mysql_connection():
     print_color('ok')
 
 
+def check_and_set_param(query, param_name, value, set_param):
+    """
+    Checking global parameters and update them if not what we've expected
+
+    :query: SQL query to check a status parameter
+    :type query: str
+    :param_name: name of the Galera parameter
+    :type param_name: str
+    :value: the correct value that param_name should have
+    :type value: str
+    :set_param: query to launch to set new parameter
+    :type fail_msg: str
+
+    """
+    print_color('sub', param_name + ' status')
+    wsrep_param = sql_query([query], True)
+    if (wsrep_param[0][1] != value):
+        sql_query([set_param])
+        print_color('up')
+    else:
+        print_color('ok')
+
+
 def check_galera_current_state():
     """
     Check Galera status to be sure the node is ready to proceed to operations
@@ -280,28 +303,6 @@ def check_galera_current_state():
             sys.exit(1)
         print_color('ok')
         return wsrep_param
-
-    def check_and_set_param(query, param_name, value, set_param):
-        """
-        Checking TOI parameter and update them if not ready to switch to RSU
-
-        :query: SQL query to check a status parameter
-        :type query: str
-        :param_name: name of the Galera parameter
-        :type param_name: str
-        :value: the correct value that param_name should have
-        :type value: str
-        :set_param: query to launch to set new parameter
-        :type fail_msg: str
-
-        """
-        print_color('sub', param_name + ' status')
-        wsrep_param = sql_query([query], True)
-        if (wsrep_param[0][1] != value):
-            sql_query([set_param])
-            print_color('up')
-        else:
-            print_color('ok')
 
     print_color('+', "Checking current Galera state")
     print ''
