@@ -126,8 +126,12 @@ def enable_rsu():
     Enable RSU Galera mode
     """
     print_color('+', 'Enabling RSU mode')
-    sql_query(['SET GLOBAL wsrep_OSU_method="RSU";',
-               'SET GLOBAL wsrep_desync=ON;'])
+    print ''
+    check_and_set_param('SHOW GLOBAL VARIABLES LIKE "wsrep_OSU_method";',
+                        'wsrep_OSU_method', 'RSU',
+                        'SET GLOBAL wsrep_OSU_method="RSU";')
+    check_and_set_param('SHOW GLOBAL VARIABLES LIKE "wsrep_desync";',
+                        'wsrep_desync', 'ON', 'SET GLOBAL wsrep_desync=ON;')
     print_color('ok')
 
 
@@ -136,9 +140,14 @@ def restore_toi():
     Restore TOI Galera mode
     """
     print_color('+', 'Restoring TOI mode')
-    sql_query(['SET wsrep_on=ON;',
-               'SET GLOBAL wsrep_desync=OFF;',
-               'SET GLOBAL wsrep_OSU_method="TOI";'])
+    print ''
+    check_and_set_param('SHOW GLOBAL VARIABLES LIKE "wsrep_on";',
+                        'wsrep_on', 'ON', 'SET GLOBAL wsrep_on=ON;')
+    check_and_set_param('SHOW GLOBAL VARIABLES LIKE "wsrep_desync";',
+                        'wsrep_desync', 'OFF', 'SET GLOBAL wsrep_desync=OFF;')
+    check_and_set_param('SHOW GLOBAL VARIABLES LIKE "wsrep_OSU_method";',
+                        'wsrep_OSU_method', 'TOI',
+                        'SET GLOBAL wsrep_OSU_method="TOI";')
     print_color('ok')
 
 
