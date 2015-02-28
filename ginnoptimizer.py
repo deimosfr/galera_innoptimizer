@@ -17,8 +17,28 @@ import MySQLdb
 import sys
 import time
 from colorama import init, Fore
+from datetime import datetime
 
 hostname, username, password = ['', '', '']
+
+
+def sizeof_fmt(num, suffix='B'):
+    """@todo: Docstring for sizeof_fmt
+
+    :num: size in bytes
+    :type num: int
+    :suffix: str
+    :type suffix: str
+
+    :returns:
+    :rtype: return a human-readable string
+
+    """
+    for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
+        if abs(num) < 1024.0:
+            return "%3.1f%s%s" % (num, unit, suffix)
+        num /= 1024.0
+    return "%.1f%s%s" % (num, 'Yi', suffix)
 
 
 def print_color(mtype, message=''):
@@ -33,13 +53,13 @@ def print_color(mtype, message=''):
 
     init(autoreset=True)
     if (mtype == 'ok'):
-        print(Fore.GREEN + 'OK')
+        print(Fore.GREEN + 'OK' + Fore.RESET + message)
     elif (mtype == '+'):
         print('[+] ' + message + '...'),
     elif (mtype == 'fail'):
         print(Fore.RED + "\n[!]" + message)
     elif (mtype == 'sub'):
-        print('  -> ' + message + '...'),
+        print(('  -> ' + message).ljust(65, '.')),
     elif (mtype == 'subsub'):
         print("\n    -> " + message + '...'),
     elif (mtype == 'up'):
@@ -106,8 +126,8 @@ def get_sorted_tables_by_size(dbname):
 
     print_color('+', "Getting list of all tables in " + dbname + " database")
     tables_list = sql_query([
-        'SELECT TABLE_NAME FROM information_schema.TABLES \
-        WHERE table_schema = "' + dbname + '"\
+        'SELECT TABLE_NAME, (data_length + index_length) AS size FROM information_schema.TABLES \
+        WHERE table_schema = "' + dbname + '" AND TABLE_TYPE<>"VIEW"\
         ORDER BY (data_length + index_length);'],
         True)
 
@@ -127,7 +147,7 @@ def enable_rsu():
     """
     print_color('+', 'Enabling RSU mode')
     sql_query(['SET GLOBAL wsrep_OSU_method="RSU";',
-               'SET GLOBAL wsrep_desync=ON;'])
+               'SET GLOBAL wsrep_desync=1;'])
     print_color('ok')
 
 
@@ -137,7 +157,7 @@ def restore_toi():
     """
     print_color('+', 'Restoring TOI mode')
     sql_query(['SET wsrep_on=ON;',
-               'SET GLOBAL wsrep_desync=OFF;',
+               'SET GLOBAL wsrep_desync=0;',
                'SET GLOBAL wsrep_OSU_method="TOI";'])
     print_color('ok')
 
@@ -158,30 +178,51 @@ def optimize_rsu(dbname, tables_list, fcpmax):
 
     """
 
-    def launch_sql_queries(table):
+    def print_formatted_results(optimize_start, table_size):
+        """
+        Print OK along with some optimization performance data
+        
+        :optimize_start: time of optimization start
+        :type optimize_start: datetime
+        :table_size: size of table/partition
+        :type table_size: int
+
+        """
+
+        time_spent = (datetime.now() - optimize_start).total_seconds()
+        print_color('ok', ' (' + '{:.1f}'.format(time_spent) + 's; ' + sizeof_fmt(table_size/time_spent) + '/s)')
+
+    def launch_sql_queries(table, size):
         """
         Launch SQL optimize on a table
         If fail during optimize, will simply go to the next one after warning
 
         :table: table name
         :type table: str
+        :size: size of the table
+        :type size: int
 
         """
 
         # Checking if there are partitions on the current table
         ptables = sql_query(['EXPLAIN PARTITIONS select * from ' + dbname +
                              '.' + table + ';'], True)
-        partitions = ptables[0][3].split(',')
+        if ptables[0][3] == None:
+          partitions = ['no partitions']
+        else:
+          partitions = ptables[0][3].split(',')
 
         # Launching query
-        print_color('sub', 'optimizing ' + table + ' in progress')
+        print_color('sub', 'optimizing ' + table + ' (' + sizeof_fmt(size) + ') in progress')
         if len(partitions) == 1:
+            start_time = datetime.now()
             sql_query(['SET wsrep_on=OFF;',
                        'optimize table ' + dbname + '.' + table + ';'],
                       False, False)
-            print_color('ok')
+            print_formatted_results(start_time, size)
         else:
             for partition in partitions:
+                start_time = datetime.now()
                 print_color('subsub', 'partition ' + partition +
                             ' in progress')
                 print('ALTER ONLINE TABLE ' + dbname + '.' + table +
@@ -190,7 +231,7 @@ def optimize_rsu(dbname, tables_list, fcpmax):
                            'ALTER ONLINE TABLE ' + dbname + '.' + table +
                            ' REBUILD PARTITION ' + partition + ';'],
                           False, False)
-                print_color('ok')
+                print_formatted_results(start_time, size)
                 get_wsrep_fcp(fcpmax)
 
     # Optimize each tables
@@ -198,9 +239,8 @@ def optimize_rsu(dbname, tables_list, fcpmax):
     print_color('+', 'Starting optimization on ' + dbname + ' database')
     print ''
     for row in tables_list:
-        for table in row:
-            get_wsrep_fcp(fcpmax)
-            launch_sql_queries(table)
+        get_wsrep_fcp(fcpmax)
+        launch_sql_queries(row[0], row[1])
     restore_toi()
 
 
@@ -315,7 +355,7 @@ def check_galera_current_state():
 
     # Optional but required checks
     check_and_set_param('SHOW GLOBAL VARIABLES LIKE "wsrep_desync";',
-                        'wsrep_desync', 'OFF', 'SET GLOBAL wsrep_desync=OFF;')
+                        'wsrep_desync', 'OFF', 'SET GLOBAL wsrep_desync=0;')
     check_and_set_param('SHOW GLOBAL VARIABLES LIKE "wsrep_OSU_method";',
                         'wsrep_OSU_method', 'TOI',
                         'SET GLOBAL wsrep_OSU_method="TOI";')
