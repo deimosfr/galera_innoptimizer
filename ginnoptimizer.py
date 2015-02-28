@@ -146,8 +146,12 @@ def enable_rsu():
     Enable RSU Galera mode
     """
     print_color('+', 'Enabling RSU mode')
-    sql_query(['SET GLOBAL wsrep_OSU_method="RSU";',
-               'SET GLOBAL wsrep_desync=1;'])
+    print ''
+    check_and_set_param('SHOW GLOBAL VARIABLES LIKE "wsrep_OSU_method";',
+                        'wsrep_OSU_method', 'RSU',
+                        'SET GLOBAL wsrep_OSU_method="RSU";')
+    check_and_set_param('SHOW GLOBAL VARIABLES LIKE "wsrep_desync";',
+                        'wsrep_desync', 'ON', 'SET GLOBAL wsrep_desync=1;')
     print_color('ok')
 
 
@@ -156,9 +160,14 @@ def restore_toi():
     Restore TOI Galera mode
     """
     print_color('+', 'Restoring TOI mode')
-    sql_query(['SET wsrep_on=ON;',
-               'SET GLOBAL wsrep_desync=0;',
-               'SET GLOBAL wsrep_OSU_method="TOI";'])
+    print ''
+    check_and_set_param('SHOW GLOBAL VARIABLES LIKE "wsrep_on";',
+                        'wsrep_on', 'ON', 'SET GLOBAL wsrep_on=ON;')
+    check_and_set_param('SHOW GLOBAL VARIABLES LIKE "wsrep_desync";',
+                        'wsrep_desync', 'OFF', 'SET GLOBAL wsrep_desync=0;')
+    check_and_set_param('SHOW GLOBAL VARIABLES LIKE "wsrep_OSU_method";',
+                        'wsrep_OSU_method', 'TOI',
+                        'SET GLOBAL wsrep_OSU_method="TOI";')
     print_color('ok')
 
 
@@ -181,7 +190,7 @@ def optimize_rsu(dbname, tables_list, fcpmax):
     def print_formatted_results(optimize_start, table_size):
         """
         Print OK along with some optimization performance data
-        
+
         :optimize_start: time of optimization start
         :type optimize_start: datetime
         :table_size: size of table/partition
@@ -287,6 +296,29 @@ def check_mysql_connection():
     print_color('ok')
 
 
+def check_and_set_param(query, param_name, value, set_param):
+    """
+    Checking global parameters and update them if not what we've expected
+
+    :query: SQL query to check a status parameter
+    :type query: str
+    :param_name: name of the Galera parameter
+    :type param_name: str
+    :value: the correct value that param_name should have
+    :type value: str
+    :set_param: query to launch to set new parameter
+    :type fail_msg: str
+
+    """
+    print_color('sub', param_name + ' status')
+    wsrep_param = sql_query([query], True)
+    if (wsrep_param[0][1] != value):
+        sql_query([set_param])
+        print_color('up')
+    else:
+        print_color('ok')
+
+
 def check_galera_current_state():
     """
     Check Galera status to be sure the node is ready to proceed to operations
@@ -320,28 +352,6 @@ def check_galera_current_state():
             sys.exit(1)
         print_color('ok')
         return wsrep_param
-
-    def check_and_set_param(query, param_name, value, set_param):
-        """
-        Checking TOI parameter and update them if not ready to switch to RSU
-
-        :query: SQL query to check a status parameter
-        :type query: str
-        :param_name: name of the Galera parameter
-        :type param_name: str
-        :value: the correct value that param_name should have
-        :type value: str
-        :set_param: query to launch to set new parameter
-        :type fail_msg: str
-
-        """
-        print_color('sub', param_name + ' status')
-        wsrep_param = sql_query([query], True)
-        if (wsrep_param[0][1] != value):
-            sql_query([set_param])
-            print_color('up')
-        else:
-            print_color('ok')
 
     print_color('+', "Checking current Galera state")
     print ''
