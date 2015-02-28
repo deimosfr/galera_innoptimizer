@@ -22,6 +22,12 @@ If you're running Debian/Ubuntu, you can install this with this line:
 aptitude install python-mysqldb python-colorama
 ```
 
+On CentOS 6, you can install with:
+
+    yum install -y python-setuptools MySQL-python
+    easy_install pip
+    pip install colorama argparse
+
 How does it work?
 -----------------
 
