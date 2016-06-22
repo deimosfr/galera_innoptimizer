@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python
 # encoding: utf-8
 # Made by Pierre Mavro / Deimosfr
@@ -19,7 +20,7 @@ import time
 from colorama import init, Fore
 from datetime import datetime
 
-hostname, username, password = ['', '', '']
+hostname, port, username, password = ['', '', '', '']
 
 
 def sizeof_fmt(num, suffix='B'):
@@ -81,7 +82,7 @@ def sql_query(queries, return_list=False, exit_fail=True):
     :rtype: return a list of result
 
     """
-    db = MySQLdb.connect(host=hostname, user=username, passwd=password)
+    db = MySQLdb.connect(host=hostname, port=port, user=username, passwd=password)
     cur = db.cursor()
 
     try:
@@ -284,7 +285,7 @@ def check_mysql_connection():
 
     try:
         print_color('+', 'Trying to connect to MySQL/MariaDB instance')
-        db = MySQLdb.connect(host=hostname, user=username, passwd=password)
+        db = MySQLdb.connect(host=hostname, port=port, user=username, passwd=password)
     except MySQLdb.Error, e:
         try:
             print_color('fail', "ERROR [%d]: %s" % (e.args[0], e.args[1]))
@@ -409,7 +410,7 @@ def args():
     Manage args
     """
 
-    global hostname, username, password
+    global hostname, port, username, password
 
     databases = []
 
@@ -447,6 +448,13 @@ def args():
                         default='localhost',
                         metavar='HOSTNAME',
                         help='Database hostname')
+    parser.add_argument('-P',
+                        '--port',
+                        action='store',
+                        type=int,
+                        default='3306',
+                        metavar='PORT',
+                        help='Database port')
     parser.add_argument('-f',
                         '--fcpmax',
                         action='store',
@@ -469,6 +477,8 @@ def args():
 
     if (result.hostname):
         hostname = result.hostname
+    if (result.port):
+        port = result.port
     if (result.username):
         username = result.username
     if (result.password):
