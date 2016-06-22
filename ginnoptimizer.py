@@ -52,7 +52,7 @@ def print_color(mtype, message=''):
 
     """
 
-    init(autoreset=True)
+    init(autoreset=False)
     if (mtype == 'ok'):
         print(Fore.GREEN + 'OK' + Fore.RESET + message)
     elif (mtype == '+'):
