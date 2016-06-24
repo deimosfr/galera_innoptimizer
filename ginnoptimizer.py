@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python
 # encoding: utf-8
 # Made by Pierre Mavro / Deimosfr
@@ -52,7 +51,7 @@ def print_color(mtype, message=''):
 
     """
 
-    init(autoreset=True)
+    init(autoreset=False)
     if (mtype == 'ok'):
         print(Fore.GREEN + 'OK' + Fore.RESET + message)
     elif (mtype == '+'):
@@ -148,11 +147,9 @@ def enable_rsu():
     """
     print_color('+', 'Enabling RSU mode')
     print ''
-    check_and_set_param('SHOW GLOBAL VARIABLES LIKE "wsrep_OSU_method";',
+    check_and_set_param('SHOW VARIABLES LIKE "wsrep_OSU_method";',
                         'wsrep_OSU_method', 'RSU',
-                        'SET GLOBAL wsrep_OSU_method="RSU";')
-    check_and_set_param('SHOW GLOBAL VARIABLES LIKE "wsrep_desync";',
-                        'wsrep_desync', 'ON', 'SET GLOBAL wsrep_desync=1;')
+                        'SET wsrep_OSU_method="RSU";')
     print_color('ok')
 
 
@@ -164,11 +161,9 @@ def restore_toi():
     print ''
     check_and_set_param('SHOW GLOBAL VARIABLES LIKE "wsrep_on";',
                         'wsrep_on', 'ON', 'SET GLOBAL wsrep_on=ON;')
-    check_and_set_param('SHOW GLOBAL VARIABLES LIKE "wsrep_desync";',
-                        'wsrep_desync', 'OFF', 'SET GLOBAL wsrep_desync=0;')
-    check_and_set_param('SHOW GLOBAL VARIABLES LIKE "wsrep_OSU_method";',
+    check_and_set_param('SHOW VARIABLES LIKE "wsrep_OSU_method";',
                         'wsrep_OSU_method', 'TOI',
-                        'SET GLOBAL wsrep_OSU_method="TOI";')
+                        'SET wsrep_OSU_method="TOI";')
     print_color('ok')
 
 
@@ -365,8 +360,6 @@ def check_galera_current_state():
                 'ON', 'Galera node is not connected')
 
     # Optional but required checks
-    check_and_set_param('SHOW GLOBAL VARIABLES LIKE "wsrep_desync";',
-                        'wsrep_desync', 'OFF', 'SET GLOBAL wsrep_desync=0;')
     check_and_set_param('SHOW GLOBAL VARIABLES LIKE "wsrep_OSU_method";',
                         'wsrep_OSU_method', 'TOI',
                         'SET GLOBAL wsrep_OSU_method="TOI";')
