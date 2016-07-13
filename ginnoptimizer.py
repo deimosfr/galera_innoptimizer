@@ -112,7 +112,7 @@ def sql_query(queries, return_list=False, exit_fail=True):
         return list_to_return
 
 
-def get_sorted_tables_by_size(dbname):
+def get_sorted_tables_by_size(dbname, restrict_tables):
     """
     Getting all tables from a database, sorting them ascending by size
 
@@ -138,7 +138,16 @@ def get_sorted_tables_by_size(dbname):
     else:
         print_color('ok')
 
-    return tables_list
+    if not restrict_tables:
+      return tables_list
+    else:
+      tables_list_filtered = []
+
+      for table_item in tables_list:
+        if table_item[0] in restrict_tables:
+          tables_list_filtered.append(table_item)
+
+    return tables_list_filtered
 
 
 def enable_rsu():
@@ -455,6 +464,13 @@ def args():
                         default='0.3',
                         metavar='FCPMAX',
                         help='Maximum allowed flow control paused')
+    parser.add_argument('-t',
+                        '--tables',
+                        action='store',
+                        type=str,
+                        default='',
+                        metavar='TABLES',
+                        help='Tables to optimise, comma-separated. (Default: all tables)')
     parser.add_argument('-v',
                         '--version',
                         action='version',
@@ -478,6 +494,10 @@ def args():
         password = result.password
     if (result.fcpmax):
         fcpmax = result.fcpmax
+    if (result.tables):
+        restrict_tables = result.tables.split(",")
+    else:
+        restrict_tables = False
 
     # Check if connection is ok
     check_mysql_connection()
@@ -499,7 +519,7 @@ def args():
 
     # Optimize all requested databases
     for database in databases:
-        tables_list = get_sorted_tables_by_size(database)
+        tables_list = get_sorted_tables_by_size(database, restrict_tables)
         optimize_rsu(database, tables_list, fcpmax)
 
     print 'Done !'
