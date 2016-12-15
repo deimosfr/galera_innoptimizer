@@ -82,7 +82,7 @@ You can then launch it like that to perform all databases with default username 
 > ./ginnoptimizer.py -d all
 [+] Trying to connect to MySQL/MariaDB instance...OK
 [+] Getting all databases...OK
-[+] Checking current Galera state... 
+[+] Checking current Galera state...
   -> wsrep_ready status...OK
   -> wsrep_cluster status...OK
   -> wsrep_connected status...OK
@@ -90,13 +90,13 @@ You can then launch it like that to perform all databases with default username 
   -> wsrep_OSU_method status...OK
 [+] Getting list of all tables in database1 database...OK
 [+] Enabling RSU mode...OK
-[+] Starting optimization on database1 database... 
+[+] Starting optimization on database1 database...
   -> wsrep_flow_control_paused status > 0.3...OK
   -> optimizing tablename in progress...OK
 [+] Restoring TOI mode...OK
 [+] Getting list of all tables in database2 database...OK
 [+] Enabling RSU mode...OK
-[+] Starting optimization on database2 database... 
+[+] Starting optimization on database2 database...
   -> wsrep_flow_control_paused status > 0.3...OK
   -> optimizing tablename1 in progress...OK
   -> wsrep_flow_control_paused status > 0.3...OK
@@ -121,6 +121,17 @@ ChangeLog
 * v0.1:
  * First release
 
+
+Contributions
+-------------
+
+Puppet modules:
+- https://forge.puppet.com/jgazeley/galera_innoptimizer
+
+Thanks to:
+- Mark Wadham
+- Guillaume Lefranc
+- Gert Van Gool
 
 Author Information
 ------------------
