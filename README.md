@@ -1,6 +1,8 @@
 Galera Innoptimizer
 ===================
 
+NOTE: I'm not using Galera anymore that's why I won't be able to maintain this tool properly. Feel free to send pull requests anyway, I'll merge them.
+
 Running an optimize on InnoDB tables in a Galera cluster will launch an optimize **on every nodes**. This is usually a **big problem when using huge tables**. This tool makes online InnoDB optimize on a Galera single node **without tables lock feeling on the user side**.
 
 Galera has an OSU mode called RSU which permit to perform online schema upgrades. This mode is used by Galera Innoptimizer to perform optimize on tables. The advantage of that solution is you can still perform write (and read of course) updates while running . It won't be replicated on any nodes, simply running locally.
